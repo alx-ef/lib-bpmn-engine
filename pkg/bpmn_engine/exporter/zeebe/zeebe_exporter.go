@@ -3,11 +3,12 @@ package zeebe
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/hazelcast/hazelcast-go-client"
 	bpmnEngineExporter "github.com/nitram509/lib-bpmn-engine/pkg/bpmn_engine/exporter"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-	"time"
 )
 
 type exporter struct {
@@ -16,6 +17,8 @@ type exporter struct {
 }
 
 const noInstanceKey = -1
+
+const bpmnEngineErrorType = "BPMN_ENGINE_ERROR"
 
 // NewExporter creates an exporter with a default Hazelcast client.
 // The default settings of a Hazelcast client are using localhost:5701 as target for the Hazelcast server
@@ -87,6 +90,28 @@ func (e *exporter) NewProcessEvent(event *bpmnEngineExporter.ProcessEvent) {
 	}
 
 	e.sendAsRecord(&rcd)
+}
+func (e *exporter) ProcessIncident(event *bpmnEngineExporter.ProcessInstanceEvent, err error) {
+	e.updatePosition()
+	r := IncidentRecord{
+		Metadata: &RecordMetadata{
+			PartitionId:          1,
+			Position:             e.position,
+			Key:                  event.ProcessInstanceKey,
+			Timestamp:            time.Now().UnixMilli(),
+			RecordType:           RecordMetadata_EVENT,
+			Intent:               string(bpmnEngineExporter.Created),
+			ValueType:            RecordMetadata_ERROR,
+			SourceRecordPosition: e.position,
+		},
+		ErrorType:            bpmnEngineErrorType,
+		ErrorMessage:         err.Error(),
+		BpmnProcessId:        event.ProcessId,
+		ProcessInstanceKey:   event.ProcessInstanceKey,
+		ElementId:            event.ProcessId,
+		ProcessDefinitionKey: event.ProcessKey,
+	}
+	e.sendAsRecord(&r)
 }
 
 func (e *exporter) EndProcessEvent(event *bpmnEngineExporter.ProcessInstanceEvent) {

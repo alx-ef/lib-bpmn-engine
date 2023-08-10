@@ -21,6 +21,9 @@ func exclusivelyFilterByConditionExpression(flows []BPMN20.TSequenceFlow, variab
 	if len(ret) == 0 {
 		ret = append(ret, findDefaultFlow(flows)...)
 	}
+	if len(ret) == 0 {
+		return ret, NewBpmnEngineError("No flow to continue the process found")
+	}
 	return ret, nil
 }
 

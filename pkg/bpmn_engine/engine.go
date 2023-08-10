@@ -3,8 +3,9 @@ package bpmn_engine
 import (
 	"errors"
 	"fmt"
-	"github.com/nitram509/lib-bpmn-engine/pkg/bpmn_engine/var_holder"
 	"time"
+
+	"github.com/nitram509/lib-bpmn-engine/pkg/bpmn_engine/var_holder"
 
 	"github.com/nitram509/lib-bpmn-engine/pkg/bpmn_engine/exporter"
 	"github.com/nitram509/lib-bpmn-engine/pkg/spec/BPMN20"
@@ -152,6 +153,7 @@ func (state *BpmnEngineState) run(instance *ProcessInstanceInfo) (err error) {
 				nextFlows, err = exclusivelyFilterByConditionExpression(nextFlows, instance.variableHolder.Variables())
 				if err != nil {
 					instance.state = process_instance.FAILED
+					state.exportIncident(*process, *instance, fmt.Errorf("failed to handle exclusive gateway: %w", err))
 					break
 				}
 			}
@@ -181,8 +183,7 @@ func (state *BpmnEngineState) run(instance *ProcessInstanceInfo) (err error) {
 		}
 	}
 
-	if instance.state == process_instance.COMPLETED || instance.state == process_instance.FAILED {
-		// TODO need to send failed state
+	if instance.state == process_instance.COMPLETED {
 		state.exportEndProcessEvent(*process, *instance)
 	}
 

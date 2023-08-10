@@ -3,6 +3,7 @@ package exporter
 type EventExporter interface {
 	NewProcessEvent(event *ProcessEvent)
 	EndProcessEvent(event *ProcessInstanceEvent)
+	ProcessIncident(event *ProcessInstanceEvent, err error)
 	NewProcessInstanceEvent(event *ProcessInstanceEvent)
 	NewElementEvent(event *ProcessInstanceEvent, elementInfo *ElementInfo)
 }

@@ -24,6 +24,18 @@ func (state *BpmnEngineState) exportNewProcessEvent(processInfo ProcessInfo, xml
 	}
 }
 
+func (state *BpmnEngineState) exportIncident(process ProcessInfo, processInstance ProcessInstanceInfo, err error) {
+	event := exporter.ProcessInstanceEvent{
+		ProcessId:          process.BpmnProcessId,
+		ProcessKey:         process.ProcessKey,
+		Version:            process.Version,
+		ProcessInstanceKey: processInstance.instanceKey,
+	}
+	for _, exp := range state.exporters {
+		exp.ProcessIncident(&event, err)
+	}
+}
+
 func (state *BpmnEngineState) exportEndProcessEvent(process ProcessInfo, processInstance ProcessInstanceInfo) {
 	event := exporter.ProcessInstanceEvent{
 		ProcessId:          process.BpmnProcessId,
